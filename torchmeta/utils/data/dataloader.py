@@ -8,6 +8,8 @@ from torchmeta.utils.data.dataset import CombinationMetaDataset
 from torchmeta.utils.data.sampler import (CombinationSequentialSampler,
                                           CombinationRandomSampler)
 
+import numpy as np
+
 class BatchMetaCollate(object):
 
     def __init__(self, collate_fn, idx=False):
@@ -15,10 +17,10 @@ class BatchMetaCollate(object):
         self.collate_fn = collate_fn
         self.idx = idx
 
-    def collate_task(self, task, idx=None):
+    def collate_task(self, task, task_idx=None):
         if isinstance(task, TorchDataset):
-            if idx:
-                return self.collate_fn([task[idx] for idx in range(len(task))]), idx
+            if task_idx is not None:
+                return self.collate_fn([[*task[idx], np.asarray([task_idx])] for idx in range(len(task))])
             else:
                 return self.collate_fn([task[idx] for idx in range(len(task))])
         elif isinstance(task, OrderedDict):
@@ -43,7 +45,7 @@ class MetaDataLoader(DataLoader):
                  worker_init_fn=None):
         if collate_fn is None:
             collate_fn = no_collate
-
+        
         if isinstance(dataset, CombinationMetaDataset) and (sampler is None):
             if shuffle:
                 sampler = CombinationRandomSampler(dataset)
