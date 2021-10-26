@@ -74,7 +74,7 @@ class BatchMetaIdxDataLoader(MetaDataLoader):
                  pin_memory=False, drop_last=False, timeout=0, worker_init_fn=None):
         collate_fn = BatchMetaCollate(default_collate, idx=True)
 
-        super(BatchMetaDataLoader, self).__init__(dataset,
+        super(BatchMetaIdxDataLoader, self).__init__(dataset,
             batch_size=batch_size, shuffle=shuffle, sampler=sampler,
             batch_sampler=None, num_workers=num_workers,
             collate_fn=collate_fn, pin_memory=pin_memory, drop_last=drop_last,
