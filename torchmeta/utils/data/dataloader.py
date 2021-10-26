@@ -10,13 +10,17 @@ from torchmeta.utils.data.sampler import (CombinationSequentialSampler,
 
 class BatchMetaCollate(object):
 
-    def __init__(self, collate_fn):
+    def __init__(self, collate_fn, idx=False):
         super().__init__()
         self.collate_fn = collate_fn
+        self.idx = idx
 
-    def collate_task(self, task):
+    def collate_task(self, task, idx=None):
         if isinstance(task, TorchDataset):
-            return self.collate_fn([task[idx] for idx in range(len(task))])
+            if idx:
+                return self.collate_fn([task[idx] for idx in range(len(task))]), idx
+            else:
+                return self.collate_fn([task[idx] for idx in range(len(task))])
         elif isinstance(task, OrderedDict):
             return OrderedDict([(key, self.collate_task(subtask))
                 for (key, subtask) in task.items()])
@@ -24,7 +28,10 @@ class BatchMetaCollate(object):
             raise NotImplementedError()
 
     def __call__(self, batch):
-        return self.collate_fn([self.collate_task(task) for task in batch])
+        if not self.idx:
+            return self.collate_fn([self.collate_task(task) for task in batch])
+        else:
+            return self.collate_fn([self.collate_task(task, idx) for task, idx in batch])
 
 def no_collate(batch):
     return batch
@@ -55,6 +62,17 @@ class BatchMetaDataLoader(MetaDataLoader):
     def __init__(self, dataset, batch_size=1, shuffle=True, sampler=None, num_workers=0,
                  pin_memory=False, drop_last=False, timeout=0, worker_init_fn=None):
         collate_fn = BatchMetaCollate(default_collate)
+
+        super(BatchMetaDataLoader, self).__init__(dataset,
+            batch_size=batch_size, shuffle=shuffle, sampler=sampler,
+            batch_sampler=None, num_workers=num_workers,
+            collate_fn=collate_fn, pin_memory=pin_memory, drop_last=drop_last,
+            timeout=timeout, worker_init_fn=worker_init_fn)
+
+class BatchMetaIdxDataLoader(MetaDataLoader):
+    def __init__(self, dataset, batch_size=1, shuffle=True, sampler=None, num_workers=0,
+                 pin_memory=False, drop_last=False, timeout=0, worker_init_fn=None):
+        collate_fn = BatchMetaCollate(default_collate, idx=True)
 
         super(BatchMetaDataLoader, self).__init__(dataset,
             batch_size=batch_size, shuffle=shuffle, sampler=sampler,
