@@ -47,20 +47,27 @@ class Sinusoid(MetaDataset):
     """
     def __init__(self, num_samples_per_task, num_tasks=1000000,
                  noise_std=None, transform=None, target_transform=None,
-                 dataset_transform=None):
+                 dataset_transform=None, deterministic_seed=None):
         super(Sinusoid, self).__init__(meta_split='train',
             target_transform=target_transform, dataset_transform=dataset_transform)
         self.num_samples_per_task = num_samples_per_task
         self.num_tasks = num_tasks
         self.noise_std = noise_std
         self.transform = transform
+        self.deterministic_seed = deterministic_seed
 
         self._input_range = np.array([-5.0, 5.0])
         self._amplitude_range = np.array([0.1, 5.0])
         self._phase_range = np.array([0, np.pi])
+        self._seed_range = np.array([0, 100000])
 
         self._amplitudes = None
         self._phases = None
+        self._seeds = None
+
+        if self.deterministic_seed is not None:
+            self.seed(self.deterministic_seed)
+
 
     @property
     def amplitudes(self):
@@ -76,6 +83,13 @@ class Sinusoid(MetaDataset):
                 self._phase_range[1], size=self.num_tasks)
         return self._phases
 
+    @property
+    def seeds(self):
+        if self._seeds is None:
+            self._seeds = self.np_random.randint(self._seed_range[0],
+                self._seed_range[1], size=self.num_tasks)
+        return self._seeds
+
     def __len__(self):
         return self.num_tasks
 
@@ -83,7 +97,7 @@ class Sinusoid(MetaDataset):
         amplitude, phase = self.amplitudes[index], self.phases[index]
         task = SinusoidTask(index, amplitude, phase, self._input_range,
             self.noise_std, self.num_samples_per_task, self.transform,
-            self.target_transform, np_random=self.np_random)
+            self.target_transform, np_random=self.np_random if self.deterministic_seed is None else np.random.RandomState(self._seeds[index]))
 
         if self.dataset_transform is not None:
             task = self.dataset_transform(task)
