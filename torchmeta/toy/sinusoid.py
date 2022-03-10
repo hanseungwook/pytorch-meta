@@ -97,7 +97,7 @@ class Sinusoid(MetaDataset):
         amplitude, phase = self.amplitudes[index], self.phases[index]
         
         if self.deterministic_seed is not None:
-            seed = self._seeds[index]
+            seed = self.seeds[index]
 
         task = SinusoidTask(index, amplitude, phase, self._input_range,
             self.noise_std, self.num_samples_per_task, self.transform,
