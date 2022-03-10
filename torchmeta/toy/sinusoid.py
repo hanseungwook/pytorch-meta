@@ -48,7 +48,7 @@ class Sinusoid(MetaDataset):
     def __init__(self, num_samples_per_task, num_tasks=1000000,
                  noise_std=None, transform=None, target_transform=None,
                  dataset_transform=None, deterministic_seed=None):
-        super(Sinusoid, self).__init__(meta_split='train',
+        super().__init__(meta_split='train',
             target_transform=target_transform, dataset_transform=dataset_transform)
         self.num_samples_per_task = num_samples_per_task
         self.num_tasks = num_tasks
